@@ -6,6 +6,7 @@ public class MailSenderTest {
     @Test
     void should_make_a_valid_http_request() {
         // TODO: write a test to demonstrate the bug in MailSender.sendV1()
+
     }
 
     @Test
