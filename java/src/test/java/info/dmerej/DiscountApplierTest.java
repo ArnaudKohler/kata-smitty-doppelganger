@@ -1,5 +1,6 @@
 package info.dmerej;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
@@ -8,11 +9,7 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class CaptureNotifier implements Notifier {
-  int count;
-
-  public CaptureNotifier() {
-    this.count = 0;
-  }
+  int count = 0;
 
   @Override
   public void notify(User user, String message) {
@@ -24,31 +21,31 @@ record Notification(User user, String message) {
 }
 
 class MockNotifier implements Notifier {
-  public final List<Notification> calls;
-
-  MockNotifier() {
-    this.calls = new ArrayList<>();
-  }
+  public final List<Notification> calls = new ArrayList<>();
 
   @Override
   public void notify(User user, String message) {
-    var notification = new Notification(user, message);
-    calls.add(notification);
+    calls.add(new Notification(user, message));
   }
 }
 
-
 public class DiscountApplierTest {
-  private final User pablo = new User("pablo", "pablo@gmail.com");
+  private User pablo;
+  private User pablito;
+  private List<User> users;
 
-  private final User pablito = new User("pablito", "pablito@gmail.com");
-
+  @BeforeEach
+  void setUp() {
+    pablo = new User("pablo", "pablo@gmail.com");
+    pablito = new User("pablito", "pablito@gmail.com");
+    users = List.of(pablo, pablito);
+  }
 
   @Test
   void should_notify_twice_when_applying_discount_for_two_users_v1() {
     var notifier = new CaptureNotifier();
     var discount = new DiscountApplier(notifier);
-    discount.applyV1(10, List.of(pablo, pablito));
+    discount.applyV1(10, users);
     assertEquals(2, notifier.count);
   }
 
@@ -56,13 +53,10 @@ public class DiscountApplierTest {
   void should_notify_twice_when_applying_discount_for_two_users_v2() {
     var mockNotifier = new MockNotifier();
     var discount = new DiscountApplier(mockNotifier);
+    discount.applyV2(10, users);
 
-    discount.applyV2(10, List.of(pablo, pablito));
-
-    var expected = List.of(pablo, pablito);
-    var expectedMails = expected.stream().map(n -> n.email()).toList();
-    var actualMails = mockNotifier.calls.stream().map(n -> n.user().email()).toList();
-    assertEquals(expectedMails, actualMails);
+    var expectedEmails = users.stream().map(User::email).toList();
+    var actualEmails = mockNotifier.calls.stream().map(n -> n.user().email()).toList();
+    assertEquals(expectedEmails, actualEmails);
   }
-
 }
