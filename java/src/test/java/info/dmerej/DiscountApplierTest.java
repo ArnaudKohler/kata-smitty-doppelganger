@@ -1,62 +1,43 @@
 package info.dmerej;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
 
-class CaptureNotifier implements Notifier {
-  int count = 0;
-
-  @Override
-  public void notify(User user, String message) {
-    count++;
-  }
-}
-
-record Notification(User user, String message) {
-}
-
-class MockNotifier implements Notifier {
-  public final List<Notification> calls = new ArrayList<>();
-
-  @Override
-  public void notify(User user, String message) {
-    calls.add(new Notification(user, message));
-  }
-}
-
+@ExtendWith(MockitoExtension.class)
 public class DiscountApplierTest {
-  private User pablo;
-  private User pablito;
-  private List<User> users;
 
-  @BeforeEach
-  void setUp() {
-    pablo = new User("pablo", "pablo@gmail.com");
-    pablito = new User("pablito", "pablito@gmail.com");
-    users = List.of(pablo, pablito);
-  }
+  @Mock
+  private Notifier notifier;
+
+  @InjectMocks
+  private DiscountApplier discountApplier;
+
+  private User user1 = new User("A", "A@test.com");
+  private User user2 = new User("B", "B@test.com");
 
   @Test
   void should_notify_twice_when_applying_discount_for_two_users_v1() {
-    var notifier = new CaptureNotifier();
-    var discount = new DiscountApplier(notifier);
-    discount.applyV1(10, users);
-    assertEquals(2, notifier.count);
+    
+    discountApplier.applyV1(10, List.of(user1, user2));
+    verify(notifier, times(1)).notify(user1, "You've got a new discount of 10%");
+    verify(notifier, times(1)).notify(user2, "You've got a newdiscount of 10%");
+
   }
 
   @Test
   void should_notify_twice_when_applying_discount_for_two_users_v2() {
-    var mockNotifier = new MockNotifier();
-    var discount = new DiscountApplier(mockNotifier);
-    discount.applyV2(10, users);
-
-    var expectedEmails = users.stream().map(User::email).toList();
-    var actualEmails = mockNotifier.calls.stream().map(n -> n.user().email()).toList();
-    assertEquals(expectedEmails, actualEmails);
+    discountApplier.applyV2(10, List.of(user1, user2));
+    verify(notifier, times(1)).notify(user1, "You've got a new discount of 10%");
+    verify(notifier, times(1)).notify(user2, "You've got a new discount of 10%");
   }
 }
