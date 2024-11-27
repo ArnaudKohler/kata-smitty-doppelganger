@@ -54,10 +54,15 @@ public class DiscountApplierTest {
 
   @Test
   void should_notify_twice_when_applying_discount_for_two_users_v2() {
-    var notifier = new CaptureNotifier();
-    var discount = new DiscountApplier(notifier);
+    var mockNotifier = new MockNotifier();
+    var discount = new DiscountApplier(mockNotifier);
+
     discount.applyV2(10, List.of(pablo, pablito));
 
+    var expected = List.of(pablo, pablito);
+    var expectedMails = expected.stream().map(n -> n.email()).toList();
+    var actualMails = mockNotifier.calls.stream().map(n -> n.user().email()).toList();
+    assertEquals(expectedMails, actualMails);
   }
 
 }
